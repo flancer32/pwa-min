@@ -1,0 +1,2 @@
+# pwa-min
+Minimal PWA
