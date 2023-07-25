@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="description" content="Simple PWA">
+    <meta name="description" content="This is a minimal PWA demonstration.">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Simple PWA</title>
     <!-- add Manifest descriptor -->
@@ -13,12 +13,21 @@
             // Register Service Worker on page load (if not registered before)
             self.addEventListener('load', async () => {
                 const container = navigator.serviceWorker;
-                if (container.controller === null) await container.register('sw.js');
+                container.addEventListener(
+                    'controllerchange',
+                    () => console.log(`SW is changed (installed or removed).`)
+                );
+                if (container.controller === null) {
+                    console.log(`Register new SW for the app.`);
+                    await container.register('sw.js');
+                    console.log(`SW is registered.`);
+                } else console.log(`SW is already registered.`);
             });
         }
     </script>
 </head>
 <body>
-<div>This is a simple PWA.</div>
+<div style="text-align: center">This is a minimal PWA.</div>
+<div style="text-align: center">See more at <a href="https://flancer32.com/">flancer32.com/</a>.</div>
 </body>
 </html>

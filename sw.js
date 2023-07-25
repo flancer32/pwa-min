@@ -13,10 +13,40 @@ const FILES_TO_CACHE = [
 // FUNCS
 
 /**
+ * When a service worker is initially registered, pages won't use it until they next load. The claim() method causes
+ * those pages to be controlled immediately.
+ *
+ * @param {ExtendableEvent} evt
+ */
+function onActivate(evt) {
+    console.log(`SW: send 'claim' message to the clients.`);
+    evt.waitUntil(
+        self.clients.claim()
+    );
+}
+
+/**
+ * Return static resource from cache (if exists) or fetch from network.
+ * @param {FetchEvent} evt
+ */
+function onFetch(evt) {
+    // FUNCS
+    async function cacheOrFetch(req) {
+        const cache = await self.caches.open(CACHE_STATIC);
+        const cachedResponse = await cache.match(req);
+        return cachedResponse ?? await fetch(req);
+    }
+
+    // MAIN
+    console.log(`SW: fetch '${evt.request}'.`);
+    evt.respondWith(cacheOrFetch(evt.request));
+}
+
+/**
  * Load and store required static resources on installation.
  * @param {ExtendableEvent} evt
  */
-function hndlEventInstall(evt) {
+function onInstall(evt) {
     // FUNCS
     async function cacheStaticFiles() {
         const cacheStat = await caches.open(CACHE_STATIC);
@@ -31,24 +61,12 @@ function hndlEventInstall(evt) {
     }
 
     // MAIN
+    console.log(`SW: cache app shell on install.`);
     //  wait until all static files will be cached
     evt.waitUntil(cacheStaticFiles());
 }
 
-/**
- * Return static resource from cache (if exists) or fetch from network.
- * @param {FetchEvent} evt
- */
-function hndlEventFetch(evt) {
-    async function cacheOrFetch(req) {
-        const cache = await self.caches.open(CACHE_STATIC);
-        const cachedResponse = await cache.match(req);
-        return cachedResponse ?? await fetch(req);
-    }
-
-    evt.respondWith(cacheOrFetch(evt.request));
-}
-
 // MAIN
-self.addEventListener('install', hndlEventInstall);
-self.addEventListener('fetch', hndlEventFetch);
+self.addEventListener('activate', onActivate);
+self.addEventListener('fetch', onFetch);
+self.addEventListener('install', onInstall);
